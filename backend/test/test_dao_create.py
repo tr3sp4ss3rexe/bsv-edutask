@@ -2,6 +2,7 @@ import pytest
 import datetime
 from pymongo.errors import WriteError
 from bson import ObjectId
+pytestmark = pytest.mark.integration
 
 # ---------- task tests ----------
 

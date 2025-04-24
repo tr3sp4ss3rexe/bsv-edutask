@@ -6,14 +6,25 @@ from src.util.dao import DAO
 TEST_DB = "edutask_test"
 
 @pytest.fixture(scope="session", autouse=True)
-def test_database():
+def test_database(request):
     """
-    Point DAO at a throw-away 'edutask_test' database and drop it
-    before/after the whole test run. Requires mongod on localhost:27017.
+    Only point DAO at edutask_test and drop it if there's
+    at least one @pytest.mark.integration test in the run.
     """
+    # look through collected tests for the "integration" marker
+    has_integration = any(
+        item.get_closest_marker("integration") 
+        for item in request.session.items
+    )
+
+    if not has_integration:
+        # no integration tests ⇒ do nothing
+        yield
+        return
+
+    # otherwise set up and tear down the test database
     mongo_url = f"mongodb://localhost:27017/{TEST_DB}"
     os.environ["MONGO_URL"] = mongo_url
-
     client = pymongo.MongoClient(mongo_url)
     client.drop_database(TEST_DB)
     yield

@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import MagicMock
 from src.controllers.usercontroller import UserController
-
+pytestmark = pytest.mark.unit
 
 def make_uc(find_return=None, find_side_effect=None):
     """Utility to create a UserController with a mocked DAO."""
