@@ -9,6 +9,7 @@ instance/
 
 # dependencies
 frontend/node_modules
+node
 /.pnp
 .pnp.js
 
