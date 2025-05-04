@@ -23,3 +23,25 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+Cypress.Commands.add('login', () => {
+    // Load user credentials from fixture
+    cy.fixture('user.json').then((user) => {
+      // Visit the login page
+      cy.visit('/');
+  
+      // Fill in the login form
+      cy.contains('div', 'Email Address')
+        .find('input[type=text]')
+        .type(user.email);
+  
+      // Submit the login form
+      cy.get('form').submit();
+  
+      // Verify successful login by checking for welcome message
+      const fullName = `${user.firstName} ${user.lastName}`;
+      cy.get('h1').should('contain.text', `Your tasks, ${fullName}`);
+    });
+  });
+  
+  

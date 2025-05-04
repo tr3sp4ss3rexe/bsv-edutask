@@ -23,7 +23,7 @@ def test_database(request):
         return
 
     # otherwise set up and tear down the test database
-    mongo_url = f"mongodb://localhost:27017/{TEST_DB}"
+    mongo_url = f"mongodb://root:root@localhost:27017/rootDb?authSource=admin"
     os.environ["MONGO_URL"] = mongo_url
     client = pymongo.MongoClient(mongo_url)
     client.drop_database(TEST_DB)
