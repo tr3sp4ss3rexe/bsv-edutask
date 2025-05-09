@@ -1,47 +1,34 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+const API = 'http://localhost:5000'
 
-Cypress.Commands.add('login', () => {
-    // Load user credentials from fixture
-    cy.fixture('user.json').then((user) => {
-      // Visit the login page
-      cy.visit('/');
-  
-      // Fill in the login form
-      cy.contains('div', 'Email Address')
-        .find('input[type=text]')
-        .type(user.email);
-  
-      // Submit the login form
-      cy.get('form').submit();
-  
-      // Verify successful login by checking for welcome message
-      const fullName = `${user.firstName} ${user.lastName}`;
-      cy.get('h1').should('contain.text', `Your tasks, ${fullName}`);
-    });
-  });
-  
-  
+/* ---------- API bootstrap helpers (used by todo.cy.js) ---------------- */
+
+/** POST /users/create  → returns { uid, user } */
+Cypress.Commands.add('apiCreateUser', (fixtureName = 'user.json') => {
+  return cy.fixture(fixtureName).then((user) => {
+    return cy.request({
+      method: 'POST',
+      url:    `${API}/users/create`,
+      form:   true,
+      body:   user,
+    }).its('body').then(body => {
+      return { uid: body._id.$oid, user }
+    })
+  })
+})
+
+/** POST /tasks/create  → returns taskId */
+Cypress.Commands.add('apiCreateTask', (uid) => {
+  const body = {
+    title:       'GUI-test task',
+    description: 'Task created by Cypress',
+    userid:      uid,
+    url:         'watch?v=HKGjCPBSG38',
+    todos:       'initial todo',
+  }
+  return cy.request({
+    method: 'POST',
+    url:    `${API}/tasks/create`,
+    form:   true,
+    body,
+  }).its('body.0._id.$oid')
+})

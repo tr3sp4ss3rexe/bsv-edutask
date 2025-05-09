@@ -37,6 +37,9 @@
     ]
   },
   "devDependencies": {
-    "cypress": "^12.10.0"
+    "cypress": "^14.3.3",
+    "mochawesome": "^7.1.3",
+    "mochawesome-merge": "^5.0.0",
+    "mochawesome-report-generator": "^6.2.0"
   }
 }
