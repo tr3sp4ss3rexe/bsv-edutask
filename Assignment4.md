@@ -41,7 +41,7 @@
 ### 1.2 Cypress implementation
 
 * **Test spec** `todo.cy.js` → <[https://TODO-link/cypress/e2e/todo.cy.js](https://github.com/tr3sp4ss3rexe/bsv-edutask/blob/master/frontend/cypress/e2e/todo.cy.js)>  
-* **API helpers** `commands.js` → <https://TODO-link/cypress/support/commands.js>  
+* **API helpers** `commands.js` → <[https://TODO-link/cypress/support/commands.js](https://github.com/tr3sp4ss3rexe/bsv-edutask/blob/master/frontend/cypress/support/commands.js)>  
 
 ### 1.3 Execution evidence
 
