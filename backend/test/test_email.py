@@ -20,9 +20,20 @@ def make_uc(find_return=None, find_side_effect=None):
         ("ghost@example.com", [], None),
     ],
 )
-def test_get_user_normal_paths(email, dao_return, expected):
+def test_get_user_by_email_result(email, dao_return, expected):
     uc = make_uc(find_return=dao_return)
-    assert uc.get_user_by_email(email) == expected
+    result = uc.get_user_by_email(email)
+    assert result == expected
+
+
+def test_get_user_multiple_matches_result():
+    dao_return = [
+        {"_id": 1, "email": "dup@example.com"},
+        {"_id": 2, "email": "dup@example.com"},
+    ]
+    uc = make_uc(find_return=dao_return)
+    result = uc.get_user_by_email("dup@example.com")
+    assert result == dao_return[0]
 
 
 def test_get_user_multiple_matches_warning(capsys):
@@ -31,11 +42,8 @@ def test_get_user_multiple_matches_warning(capsys):
         {"_id": 2, "email": "dup@example.com"},
     ]
     uc = make_uc(find_return=dao_return)
-
-    result = uc.get_user_by_email("dup@example.com")
+    uc.get_user_by_email("dup@example.com")
     captured = capsys.readouterr()
-
-    assert result == dao_return[0]
     assert "Error: more than one user found with mail dup@example.com" in captured.out
 
 
