@@ -32,3 +32,7 @@ Cypress.Commands.add('apiCreateTask', (uid) => {
     body,
   }).its('body.0._id.$oid')
 })
+
+Cypress.Commands.add('waitForPopupRefresh', () => {
+  cy.wait('@stubTaskById');        // waits for the *next* GET /tasks/byid
+});
