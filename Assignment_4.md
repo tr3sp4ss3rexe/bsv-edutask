@@ -1,6 +1,6 @@
 # Assignment 4 – GUI Testing
 
-> *Authors / Work-distribution:* **Adam / Daniel**  
+> *Authors / Work-distribution:* **Group 30 – Daniel Mohagheghifard & Adam Abdullah**  
 > *Details:* Both authors analysed the R8 requirements, implemented Cypress tests, debugged each
 > other’s code, researched declarative vs imperative testing, and prepared the written material.
 > Daniel drafted the discussion section; Adam converted the report to Markdown and organised the

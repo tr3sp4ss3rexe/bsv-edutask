@@ -1,6 +1,6 @@
 # Lab 1 – Assignment 1: The Test Design Technique
 
-*Team members: Adam X & Daniel Y*  
+*Team members: Group 30 – Daniel Mohagheghifard & Adam Abdullah*  
 
 **Work distribution**
 
