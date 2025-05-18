@@ -1,156 +1,137 @@
 /// <reference types="cypress" />
+const API = Cypress.env('API');
 
-describe('R8 - Todo list manipulation', () => {
-  const API = 'http://localhost:5000';              // backend base
+describe('R8 - Todo list manipulation (integration)', () => {
   let uid, taskId, user;
 
-  /* ------------------------------------------------------------------ */
-  /* bootstrap a fake user + task ONCE                                  */
-  /* ------------------------------------------------------------------ */
   before(() => {
-    cy.apiCreateUser()                              // custom command from support/commands.js
+    // Consistent viewport
+    cy.viewport(1920, 1080);
+
+    // Create user and task via API
+    cy.apiCreateUser()
       .then(({ uid: newUid, user: newUser }) => {
         uid  = newUid;
         user = newUser;
-        return cy.apiCreateTask(uid);               // returns Mongo id string
+        return cy.apiCreateTask(uid);
       })
-      .then(id => { taskId = id; });
+      .then(id => {
+        taskId = id;
+      });
   });
 
-  /* ------------------------------------------------------------------ */
-  /* stub network & open the Task-detail popup (no DELETE stub)        */
-  /* ------------------------------------------------------------------ */
-  const loginAndOpenPopup = () => {
-    const todos = [{
-      _id:  'stub_todo_1',
-      desc: 'initial todo',
-      done: false
-    }];
+  beforeEach(() => {
+    cy.viewport(1920, 1080);
+    cy.intercept('GET', `${API}/tasks/ofuser/**`).as('getTasks');
+    cy.intercept('GET', `${API}/tasks/byid/**`).as('getTaskById');
+    cy.intercept('POST', `${API}/todos/create`).as('createTodo');
+    cy.intercept('PUT', `${API}/todos/byid/**`).as('toggleTodo');
+    cy.intercept('DELETE', `${API}/todos/byid/**`).as('deleteTodo');
 
-    const makeTaskDoc = () => ({
-      _id:   { $oid: 'stub_task_1' },
-      title: 'GUI-test task',
-      description: 'Task created by Cypress (stub)',
-      video: { url: 'dQw4w9WgXcQ' },
-      todos: todos.map(t => ({
-        _id: { $oid: t._id },
-        description: t.desc,
-        done: t.done
-      }))
-    });
-
-    cy.intercept('GET', '**/tasks/ofuser/**', req => {
-      req.reply(200, [makeTaskDoc()]);
-    }).as('stubTasks');
-
-    cy.intercept('GET', '**/tasks/byid/**', req => {
-      req.reply(200, makeTaskDoc());
-    }).as('stubTaskById');
-
-    cy.intercept('POST', '**/todos/create', req => {
-      const params = new URLSearchParams(req.body);
-      const desc   = params.get('description') || '';
-      const newId  = `stub_${Date.now()}`;
-      todos.push({ _id: newId, desc, done: false });
-      req.reply(201, { ok: true });
-    }).as('stubTodoCreate');
-
-    cy.intercept('PUT', '**/todos/byid/**', req => {
-      const id   = req.url.split('/').pop();
-      const todo = todos.find(t => t._id === id);
-      if (todo) todo.done = !todo.done;
-      req.reply(200, { ok: true });
-    }).as('stubTodoToggle');
-
-    // NOTE: no cy.intercept for DELETE – we'll hit the real API
-
+    // Login
     cy.visit('/');
-    cy.contains('div', 'Email Address').find('input').type(user.email);
+    cy.contains('div', 'Email Address')
+      .find('input[type=text]')
+      .type(user.email, { delay: 10 });
     cy.get('form').submit();
 
-    cy.wait('@stubTasks');
-    cy.contains('a', 'GUI-test task', { timeout: 20000 }).click();
-    cy.wait('@stubTaskById');
-    cy.get('.popup', { timeout: 20000 }).should('be.visible');
-  };
-
-  beforeEach(loginAndOpenPopup);
-
-  /* ------------------------------------------------------------------ */
-  /* helper: wait for next popup refresh                                */
-  /* ------------------------------------------------------------------ */
-  Cypress.Commands.add('waitForPopupRefresh', () => {
-    cy.wait('@stubTaskById');
+    // Open test task
+    cy.wait('@getTasks');
+    cy.contains('a', 'GUI-test task' ).click();
+    cy.wait('@getTaskById');
+    cy.get('.popup' ).should('be.visible');
   });
 
-  /* ---------------------------  R8UC1 : CREATE  ---------------------- */
+  /* CREATE */
   it('TC1 - add todo with 1-char description', () => {
     const desc = 'A';
-    cy.get('[placeholder="Add a new todo item"]').clear().type(desc);
-    cy.get('form.inline-form input[type="submit"]').click();
-    cy.waitForPopupRefresh();
-    cy.contains('li.todo-item', desc, { timeout: 10000 }).should('be.visible');
+    cy.get('[placeholder="Add a new todo item"]')
+      .type(desc);
+    cy.get('form.inline-form input[type=submit]')
+      .click();
+    cy.wait('@createTodo');
+    cy.wait('@getTaskById');
+    cy.contains('li.todo-item', desc).should('be.visible');
   });
 
   it('TC2 - add todo with long (200-char) description', () => {
     const desc = 'x'.repeat(200);
-    cy.get('[placeholder="Add a new todo item"]').clear().type(desc);
-    cy.get('form.inline-form input[type="submit"]').click();
-    cy.waitForPopupRefresh();
-    cy.contains('li.todo-item', desc, { timeout: 10000 }).should('be.visible');
+    cy.get('[placeholder="Add a new todo item"]')
+      .type(desc );
+    cy.get('form.inline-form input[type=submit]')
+      .click();
+    cy.wait('@createTodo');
+    cy.wait('@getTaskById');
+    cy.contains('li.todo-item', desc).should('be.visible');
   });
 
-  it('TC3 – “Add” disabled for empty input', () => {
-    cy.get('[placeholder="Add a new todo item"]').clear();
-    cy.get('form.inline-form input[type="submit"]').should('be.disabled');
+  it('TC3 - Add button disabled for empty input', () => {
+    cy.get('[placeholder="Add a new todo item"]')
+    cy.get('form.inline-form input[type=submit]').should('be.disabled');
   });
 
-  /* ---------------------------  R8UC2 : TOGGLE  ---------------------- */
+  /* TOGGLE */
   it('TC4 - toggle active → done', () => {
     const desc = 'toggle-me';
-    cy.get('[placeholder="Add a new todo item"]').clear().type(desc);
-    cy.get('form.inline-form input[type="submit"]').click();
-    cy.waitForPopupRefresh();
+    // Add a new todo and submit
+    cy.get('[placeholder="Add a new todo item"]')
+      .clear()
+      .type(desc );
+    cy.get('form.inline-form input[type=submit]')
+      .click();
+    cy.wait('@createTodo');
+    cy.wait('@getTaskById');
 
-    cy.contains('li.todo-item', desc).as('item');
-    cy.get('@item').find('span.checker').click();
-    cy.waitForPopupRefresh();
-    cy.get('@item').find('span.checker').should('have.class', 'checked');
+    // Toggle checker
+    cy.contains('li.todo-item', desc)
+      .find('span.checker')
+      .click()
+      .should('have.class', 'checked');
   });
 
   it('TC5 - toggle done → active', () => {
     const desc = 'toggle-me';
-    cy.get('[placeholder="Add a new todo item"]').clear().type(desc);
-    cy.get('form.inline-form input[type="submit"]').click();
-    cy.waitForPopupRefresh();
+    // Add todo
+    cy.get('[placeholder="Add a new todo item"]')
+      .type(desc );
+    cy.get('form.inline-form input[type=submit]')
+      .click();
+    cy.wait('@createTodo');
+    cy.wait('@getTaskById');
 
-    cy.contains('li.todo-item', desc).as('item');
-    cy.get('@item').find('span.checker').click();
-    cy.waitForPopupRefresh();
-    cy.get('@item').find('span.checker').click();
-    cy.waitForPopupRefresh();
+    // Toggle checker
     cy.contains('li.todo-item', desc)
       .find('span.checker')
+      .click()
       .should('have.class', 'unchecked');
   });
 
-  /* ---------------------------  R8UC3 : DELETE  ---------------------- */
-  it('TC6 – delete todo on a single click', () => {
-    const desc = 'delete-me';
-    cy.get('[placeholder="Add a new todo item"]').clear().type(desc);
-    cy.get('form.inline-form input[type="submit"]').click();
-    cy.waitForPopupRefresh();
+  /* DELETE */
+it('TC6 – delete all existing todo items with per-item assertions', () => {
+  // Spy on each DELETE call
+  cy.intercept('DELETE', '/todos/byid/*').as('deleteTodo');
 
-    cy.contains('li.todo-item', desc).as('trash');
-    cy.get('@trash').find('span.remover').click();
-    cy.waitForPopupRefresh();
+  // Iterate over each todo item
+  cy.get('li.todo-item').each(($el) => {
+    const text = $el.text().trim();
 
-    cy.contains('li.todo-item', desc).should('not.exist');
+    // Ensure it exists before deletion
+    cy.contains('li.todo-item', text).should('exist');
+
+    // Click its delete (×) button
+    cy.wrap($el).find('span.remover').click();
+
+    // Wait for the DELETE request and task reload
+    cy.wait('@deleteTodo');
+    cy.wait('@getTaskById');
+
+    // Assert this specific item is gone
+    cy.contains('li.todo-item', text).should('not.exist');
   });
+});
 
-  /* ---------------------------  tear-down  ---------------------------- */
   after(() => {
-    if (taskId) cy.request('DELETE', `${API}/tasks/byid/${taskId}`, { failOnStatusCode: false });
-    if (uid)    cy.request('DELETE', `${API}/users/${uid}`,         { failOnStatusCode: false });
+    if (taskId) cy.apiDeleteTask(taskId);
+    if (uid)    cy.apiDeleteUser(uid);
   });
 });

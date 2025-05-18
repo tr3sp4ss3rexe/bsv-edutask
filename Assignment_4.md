@@ -47,7 +47,7 @@
 | TC-3 | Add todo – empty description | popup open, input cleared | Click Add                | Add button disabled; no network request | ✗ fail |
 | TC-4 | Toggle active → done         | existing active todo      | Click checker            | `<li>` has class `checked`              | ✓ pass |
 | TC-5 | Toggle done → active         | existing done todo        | Click checker            | `<li>` has class `unchecked`            | ✓ pass |
-| TC-6 | Delete todo                  | popup open, item present  | Click ×                  | `<li>` removed from DOM                 | ✎ bug  |
+| TC-6 | Delete todo                  | popup open, item present  | Click ×                  | `<li>` removed from DOM on **one click** | ✗ fails (requires 2 clicks) |
 
 #### Table B – Requirements Traceability
 
@@ -71,8 +71,8 @@
 > *R8UC1 Alt 2.b*: “Add” button must remain disabled when the description is empty.
 > In the current front-end (`TaskDetail.js`) the `<input type="submit">` is never given a `disabled` prop, therefore TC-3 fails and reveals a requirement violation.
 
-> *R8UC3 Alt 4.a*: “Deleting a todo must remove it from the list on a single click.”
-> In the current front-end (`TaskDetail.js` → `deleteTodo`), the calls to `updateTask()` and `updateTasks()` are invoked immediately instead of being chained, so the UI refresh happens *before* the DELETE request completes. As a result, TC-6 (single-click delete) still shows the item, only disappearing on a second click, exposing a clear violation of the deletion requirement.
+> *R8UC3 Alt 4.a*: “Deleting a todo must remove it from the list on a single click.”  
+> In the current front-end (`TaskDetail.js` → `deleteTodo`), the `fetch(..., method: 'delete')` and the calls to `updateTask()`/`updateTasks()` are not properly chained, so the UI refresh happens *before* the DELETE actually finishes. As a result, the first click does **not** remove the `<li>` (only a second click does), exposing a clear violation of the single-click deletion requirement.  
 
 ---
 
