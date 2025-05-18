@@ -107,28 +107,28 @@ describe('R8 - Todo list manipulation (integration)', () => {
   });
 
   /* DELETE */
-it('TC6 – delete all existing todo items with per-item assertions', () => {
-  // Spy on each DELETE call
-  cy.intercept('DELETE', '/todos/byid/*').as('deleteTodo');
+  it('TC6 – delete all existing todo items with per-item assertions', () => {
+    // Spy on each DELETE call
+    cy.intercept('DELETE', '/todos/byid/*').as('deleteTodo');
 
-  // Iterate over each todo item
-  cy.get('li.todo-item').each(($el) => {
-    const text = $el.text().trim();
+    // Iterate over each todo item
+    cy.get('li.todo-item').each(($el) => {
+      const text = $el.text().trim();
 
-    // Ensure it exists before deletion
-    cy.contains('li.todo-item', text).should('exist');
+      // Ensure it exists before deletion
+      cy.contains('li.todo-item', text).should('exist');
 
-    // Click its delete (×) button
-    cy.wrap($el).find('span.remover').click();
+      // Click its delete (×) button
+      cy.wrap($el).find('span.remover').click();
 
-    // Wait for the DELETE request and task reload
-    cy.wait('@deleteTodo');
-    cy.wait('@getTaskById');
+      // Wait for the DELETE request and task reload
+      cy.wait('@deleteTodo');
+      cy.wait('@getTaskById');
 
-    // Assert this specific item is gone
-    cy.contains('li.todo-item', text).should('not.exist');
+      // Assert this specific item is gone
+      cy.contains('li.todo-item', text).should('not.exist');
+    });
   });
-});
 
   after(() => {
     if (taskId) cy.apiDeleteTask(taskId);
