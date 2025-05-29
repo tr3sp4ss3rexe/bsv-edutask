@@ -38,25 +38,6 @@ Cypress.Commands.add('apiCreateTask', (uid) => {
   }).its('body.0._id.$oid');
 });
 
-/** POST /todos/create  → returns todoId */
-Cypress.Commands.add('apiCreateTodo', (taskId, description = 'api-generated todo') => {
-  return cy.request({
-    method: 'POST',
-    url:    `${API}/todos/create`,
-    form:   true,
-    body:   { taskId, description },
-  }).its('body._id.$oid');
-});
-
-/** PUT /todos/byid/:id  → updates a todo's done status */
-Cypress.Commands.add('apiUpdateTodo', (todoId, done) => {
-  return cy.request({
-    method: 'PUT',
-    url:    `${API}/todos/byid/${todoId}`,
-    body:   { done },
-  });
-});
-
 /** DELETE /tasks/byid/:id */
 Cypress.Commands.add('apiDeleteTask', (taskId) => {
   return cy.request({
@@ -72,5 +53,35 @@ Cypress.Commands.add('apiDeleteUser', (uid) => {
     method: 'DELETE',
     url:    `${API}/users/${uid}`,
     failOnStatusCode: false,
+  });
+});
+
+/**
+ * POST /todos/create → returns the created todo object
+ * @param {string} taskId
+ * @param {string} description
+ * @returns Cypress.Chainable<Object>
+ */
+Cypress.Commands.add('apiCreateTodo', (taskId, description) => {
+  return cy.request({
+    method: 'POST',
+    url:    `${API}/todos/create`,
+    form:   true,
+    body:   { description, taskid: taskId },
+  }).its('body');
+});
+
+/**
+ * PUT /todos/byid/:id → updates a todo (e.g. toggling done)
+ * @param {string} todoId
+ * @param {Object} updateData  // e.g. { $set: { done: true } }
+ * @returns Cypress.Chainable<unknown>
+ */
+Cypress.Commands.add('apiUpdateTodo', (todoId, updateData) => {
+  return cy.request({
+    method: 'PUT',
+    url:    `${API}/todos/byid/${todoId}`,
+    form:   true,
+    body:   { data: JSON.stringify(updateData) },
   });
 });
