@@ -38,6 +38,25 @@ Cypress.Commands.add('apiCreateTask', (uid) => {
   }).its('body.0._id.$oid');
 });
 
+/** POST /todos/create  → returns todoId */
+Cypress.Commands.add('apiCreateTodo', (taskId, description = 'api-generated todo') => {
+  return cy.request({
+    method: 'POST',
+    url:    `${API}/todos/create`,
+    form:   true,
+    body:   { taskId, description },
+  }).its('body._id.$oid');
+});
+
+/** PUT /todos/byid/:id  → updates a todo's done status */
+Cypress.Commands.add('apiUpdateTodo', (todoId, done) => {
+  return cy.request({
+    method: 'PUT',
+    url:    `${API}/todos/byid/${todoId}`,
+    body:   { done },
+  });
+});
+
 /** DELETE /tasks/byid/:id */
 Cypress.Commands.add('apiDeleteTask', (taskId) => {
   return cy.request({
